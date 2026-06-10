@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Day 2</title> 
+    </head>
+    <body>
+        <h1>Welcome to KRMU</h1>
+        <button>Change</button>
+        <script>
+        const heading = document.querySelector('h1');
+        const button = document.querySelector('button');
+        //heading.textContent = 'Welcome to KRMU - Day 2';
+
+        // Toggle heading text color on each click
+        button.addEventListener('click', () => {
+            heading.textContent = 'Welcome to BootCamp - Day 2';
+
+            // If color is already set, remove it; otherwise apply a color
+            if (heading.style.color) {
+                heading.style.color = '';
+            } else {
+                heading.style.color = 'purple';
+            }
+        });
+        </script>
+    </body>
+</html>
