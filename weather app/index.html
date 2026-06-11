@@ -649,25 +649,10 @@
       <div class="suggestions" id="suggestions"></div>
     </div>
 
-    <button class="settings-toggle" id="settings-toggle" title="Data source settings" aria-label="Data source settings">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    </button>
+
   </header>
 
-  <div class="settings-panel" id="settings-panel">
-    <div class="settings-row">
-      <label>Data source</label>
-      <select id="provider-select">
-        <option value="open-meteo">Open-Meteo (free, no key)</option>
-        <option value="openweather">OpenWeatherMap (API key)</option>
-      </select>
-    </div>
-    <div class="settings-row" id="owm-key-row" style="display:none;">
-      <label for="owm-key-input">OpenWeatherMap API key</label>
-      <input type="text" id="owm-key-input" placeholder="Paste your API key…" autocomplete="off" />
-    </div>
-    <p class="settings-note" id="settings-note"></p>
-  </div>
+
 
   <div class="status" id="status"></div>
 
@@ -680,7 +665,6 @@
     <h2>Where's the weather taking you?</h2>
     <p>Search for a city to see the current conditions, hourly forecast, and rain outlook for the next few days.</p>
     <div class="quick-cities">
-      <button data-city="London">London</button>
       <button data-city="Tokyo">Tokyo</button>
       <button data-city="New York">New York</button>
       <button data-city="Mumbai">Mumbai</button>
@@ -939,59 +923,37 @@ const els = {
   dailySection: document.getElementById('daily-section'),
   hourlyTrack: document.getElementById('hourly-track'),
   dailyList: document.getElementById('daily-list'),
-  settingsToggle: document.getElementById('settings-toggle'),
-  settingsPanel: document.getElementById('settings-panel'),
-  providerSelect: document.getElementById('provider-select'),
-  owmKeyRow: document.getElementById('owm-key-row'),
-  owmKeyInput: document.getElementById('owm-key-input'),
-  settingsNote: document.getElementById('settings-note'),
 };
 
 /* =========================================================
-   PROVIDER / SETTINGS
+   PROVIDER / SETTINGS — locked to OpenWeatherMap
    ========================================================= */
-function getProvider(){ return localStorage.getItem('weather-provider') || 'open-meteo'; }
-function getOwmKey(){ return localStorage.getItem('owm-api-key') || ''; }
-
-function updateSettingsNote(){
-  const provider = els.providerSelect.value;
-  if(provider === 'openweather'){
-    if(getOwmKey()){
-      els.settingsNote.innerHTML = `Using OpenWeatherMap with your saved key. Get a free key at <a href="https://home.openweathermap.org/users/sign_up" target="_blank" rel="noopener">openweathermap.org</a>. New keys can take up to a couple of hours to activate.`;
-    } else {
-      els.settingsNote.innerHTML = `Paste a free OpenWeatherMap API key to use this source. Get one at <a href="https://home.openweathermap.org/users/sign_up" target="_blank" rel="noopener">openweathermap.org</a> — new keys can take up to a couple of hours to activate.`;
-    }
-  } else {
-    els.settingsNote.innerHTML = `Open-Meteo requires no API key and works out of the box.`;
-  }
+function getProvider(){
+  return 'openweather';
+}
+function getOwmKey(){
+  return '9541dabe49a3f2ad44cb61d50742a1d7';
 }
 
-els.settingsToggle.addEventListener('click', () => {
-  els.settingsToggle.classList.toggle('active');
-  els.settingsPanel.classList.toggle('active');
-});
+// Clear any stale localStorage settings from old versions
+localStorage.removeItem('weather-provider');
+localStorage.removeItem('owm-api-key');
 
-els.providerSelect.addEventListener('change', () => {
-  const provider = els.providerSelect.value;
-  localStorage.setItem('weather-provider', provider);
-  els.owmKeyRow.style.display = provider === 'openweather' ? 'flex' : 'none';
-  updateSettingsNote();
-});
 
-els.owmKeyInput.addEventListener('input', () => {
-  localStorage.setItem('owm-api-key', els.owmKeyInput.value.trim());
-  updateSettingsNote();
-});
 
-(function initSettings(){
-  const provider = getProvider();
-  els.providerSelect.value = provider;
-  els.owmKeyRow.style.display = provider === 'openweather' ? 'flex' : 'none';
-  els.owmKeyInput.value = getOwmKey();
-  updateSettingsNote();
-})();
 
 let searchTimeout;
+
+// Test API key on load
+(async function testApiKey(){
+  const key = getOwmKey();
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=London&appid=${key}`);
+    if(res.status === 401){
+      showStatus('⚠️ OpenWeatherMap API key is invalid or not yet activated. New keys can take up to 2 hours.', true);
+    }
+  } catch(e) {}
+})();
 
 els.input.addEventListener('input', () => {
   clearTimeout(searchTimeout);
@@ -1055,9 +1017,7 @@ async function fetchSuggestions(query, autoSelectFirst=false){
   if(provider === 'openweather'){
     const key = getOwmKey();
     if(!key){
-      showStatus('Add your OpenWeatherMap API key in settings (gear icon) to use this source.', true);
-      els.settingsPanel.classList.add('active');
-      els.settingsToggle.classList.add('active');
+      showStatus('Weather API key is missing.', true);
       return;
     }
     try{
@@ -1065,7 +1025,7 @@ async function fetchSuggestions(query, autoSelectFirst=false){
       const res = await fetch(url);
       const data = await res.json();
       if(res.status === 401){
-        showStatus('That OpenWeatherMap API key was rejected. Double-check it in settings — new keys can take a couple of hours to activate.', true);
+        showStatus('Weather API key was rejected. Please contact the site administrator.', true);
         return;
       }
       if(!Array.isArray(data) || data.length === 0){
@@ -1158,9 +1118,7 @@ async function loadWeather(place){
   if(provider === 'openweather'){
     const key = getOwmKey();
     if(!key){
-      showStatus('Add your OpenWeatherMap API key in settings (gear icon) to use this source.', true);
-      els.settingsPanel.classList.add('active');
-      els.settingsToggle.classList.add('active');
+      showStatus('Weather API key is missing.', true);
       return;
     }
     showStatus('<span class="spinner"></span>Fetching weather…');
@@ -1170,7 +1128,7 @@ async function loadWeather(place){
       clearStatus();
     } catch(err){
       if(err && err.code === 401){
-        showStatus('That OpenWeatherMap API key was rejected. Double-check it in settings — new keys can take a couple of hours to activate.', true);
+        showStatus('Weather API key was rejected. Please contact the site administrator.', true);
       } else {
         showStatus('Could not load weather data. Please try again.', true);
       }
@@ -1452,8 +1410,6 @@ function renderDaily(daily){
   });
 }
 
-// Load a default city on first visit
-loadWeather({ name:'London', admin1:'England', country:'United Kingdom', latitude:51.5074, longitude:-0.1278, timezone:'auto' });
 </script>
 
 </body>
