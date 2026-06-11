@@ -11,17 +11,11 @@
         const button = document.querySelector('button');
         //heading.textContent = 'Welcome to KRMU - Day 2';
 
-        // Toggle heading text color on each click
         button.addEventListener('click', () => {
+            // alert('Button clicked!');
             heading.textContent = 'Welcome to BootCamp - Day 2';
-
-            // If color is already set, remove it; otherwise apply a color
-            if (heading.style.color) {
-                heading.style.color = '';
-            } else {
-                heading.style.color = 'purple';
-            }
+            heading.style.backgroundColor = 'cyan';
         });
         </script>
-    </body>
+    </body>-
 </html>
